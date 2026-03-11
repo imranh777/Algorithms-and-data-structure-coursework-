@@ -1,1 +1,80 @@
-# Algorithms-and-data-structure-coursework-
+import math
+import time
+
+# cache to store previous prime results
+prime_cache = {}
+
+
+def is_prime(n):
+    # 1) use the same cache mechanism
+    if n in prime_cache:
+        return prime_cache[n]
+
+    # not prime if < 2
+    if n < 2:
+        prime_cache[n] = False
+        return False
+
+    # 2) small optimisations: handle 2 and skip even numbers
+    if n == 2:
+        prime_cache[n] = True
+        return True
+    if n % 2 == 0:
+        prime_cache[n] = False
+        return False
+
+    limit = int(math.sqrt(n)) + 1
+    for i in range(3, limit, 2):  # only odd divisors
+        if n % i == 0:
+            prime_cache[n] = False
+            return False
+
+    prime_cache[n] = True
+    return True
+
+
+def prime_dense_window(number_string, W, N):
+    # extra validation but same style
+    if not number_string.isdigit() or W <= 0 or W > len(number_string):
+        return "0, 0: Invalid input"
+
+    best_index = 0
+    max_count = 0
+    best_primes = set()
+
+    length = len(number_string)
+
+    for i in range(length - W + 1):
+        window = number_string[i:i + W]
+        w_len = len(window)
+        primes_found = set()
+
+        # 3) avoid repeated slicing+int: build numbers incrementally
+        for start in range(w_len):
+            num = 0
+            for end in range(start, w_len):
+                num = num * 10 + (ord(window[end]) - 48)  # faster than int(window[start:end+1])
+
+                if num >= N:
+                    break  # longer substrings will only be bigger
+
+                if is_prime(num):
+                    primes_found.add(num)
+
+        if len(primes_found) > max_count:
+            max_count = len(primes_found)
+            best_index = i
+            best_primes = primes_found
+
+    if max_count == 0:
+        return "0, 0: No primes found"
+
+    primes_list = sorted(best_primes)
+    return f"{best_index}, {max_count}: {', '.join(map(str, primes_list))}"
+
+
+# runtime measurement (same pattern as before)
+start_time = time.perf_counter()
+print(prime_dense_window("3141592653", 3, 50))
+end_time = time.perf_counter()
+print("Runtime:", end_time - start_time, "seconds")
